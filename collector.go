@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"math"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -261,8 +262,11 @@ func ipmitoolConfig(config IPMIConfig) []string {
 	if config.User != "" {
 		args = append(args, "-U", config.User)
 	}
+	// Using -P for the password is bad, since it would show up in the
+	// process info (ps). Instead use -E and provide the password via
+	// environment variable IPMITOOL_PASSWORD
 	if config.Password != "" {
-		args = append(args, "-P", config.Password)
+		args = append(args, "-E")
 	}
 	if config.Timeout != 0 {
 		args = append(args, "-N", strconv.FormatInt(config.Timeout, 36))
@@ -299,6 +303,16 @@ func ipmitoolOutput(target ipmiTarget, command string) (string, error) {
 	cmdConfig = append(cmdConfig, cmdCommand...)
 
 	cmd := exec.Command("ipmitool", cmdConfig...)
+
+	// Using -P for the password is bad, since it would show up in the
+	// process info (ps). Instead use -E and provide the password via
+	// environment variable IPMITOOL_PASSWORD
+	if target.config.Password != "" {
+		passwordEnv := "IPMITOOL_PASSWORD=" + target.config.Password
+		newEnv := append(os.Environ(), passwordEnv)
+		cmd.Env = newEnv
+	}
+
 	var outBuf bytes.Buffer
 	cmd.Stdout = &outBuf
 	cmd.Stderr = &outBuf
