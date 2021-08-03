@@ -265,7 +265,7 @@ func ipmitoolConfig(config IPMIConfig) []string {
 		args = append(args, "-P", config.Password)
 	}
 	if config.Timeout != 0 {
-		args = append(args, "-N", strconv.FormatInt(config.Timeout, 36))
+		args = append(args, "-N", strconv.FormatInt(config.Timeout, 10))
 	}
 	return args
 }
